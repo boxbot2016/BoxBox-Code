@@ -1,0 +1,39 @@
+int left1 = 10;
+int left2 = 11;
+int right1 = 2;
+int right2 = 3;
+int sensorPin = A5;
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(left1, OUTPUT);
+  pinMode(left2, OUTPUT);
+  pinMode(right1, OUTPUT);
+  pinMode(right2, OUTPUT);
+  pinMode(sensorPin, INPUT);
+  Serial.begin(9600);
+}
+
+int out1 = 0;
+int out2 = 0;
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  int val = analogRead(sensorPin);
+  out1 = map(val, 0, 1023, 0, 255);
+  Serial.print("out1 = ");
+  Serial.println(out1);
+  if (out1 > 200){
+    analogWrite(left1, out1);
+    digitalWrite(left2, LOW);
+    analogWrite(right2, out1);
+    digitalWrite(right1, LOW);
+  }
+  else{
+    digitalWrite(left1, LOW);
+    digitalWrite(right2, LOW);
+  }
+  
+  
+  delay(100);
+}
