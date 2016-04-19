@@ -57,7 +57,7 @@ int encoder2Output1 = A15;
 int encoder2Output2 = A3; // FIX THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 RotaryEncoder encoder1(encoder1Output1, encoder1Output2); // This is an encoder object
 RotaryEncoder encoder2(encoder2Output1, encoder2Output2);
-int Efinal1;
+int Efinal1;  // store final encoder counts before turning around
 int Efinal2;
 
 int retrieve = 0; //if retrieve = 0, run the code to find the container and move to it
