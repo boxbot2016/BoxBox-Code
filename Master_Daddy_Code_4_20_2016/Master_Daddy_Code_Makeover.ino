@@ -211,7 +211,7 @@ void loop() {
     digitalWrite(rightForward, LOW);
     analogWrite(rightBackward, vTurning);
 
-    delay(2400); //change depending on velocity so that it turns exactly around
+    delay(1950); //change depending on velocity so that it turns exactly around
     stopTurning = 0;
 
     digitalWrite(leftForward, LOW);
