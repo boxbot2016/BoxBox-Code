@@ -4,7 +4,7 @@
 // Modify pin numbers to work with our wiring
 #define TRIGGER_PIN  22  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     24  // Arduino pin tied to echo pin on the ultrasonic sensor.
-#define MAX_DISTANCE 50 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
 int leftForward = 10; // These pins are not named intuitively
@@ -38,27 +38,24 @@ int val11;
 int maxLeft;
 int maxRight;
 
-int vForward = 125; //velocity when moving forwards
-int vBackwards = 125;  //velocity when moving backwards
-int vTurning = 100;  //velocity when turning
+int vForward =  100;//velocity when moving forwards
+int vBackwards = 100;  //velocity when moving backwards
+int vTurning = 80;  //velocity when turning
 int velocity = vForward;  //velocity variable that gets changed sometimes
 
-int threshold = 500; //   ************THRESHOLD IR TO MAKE THE ROBOT MOVE FORWARD
+int threshold = 200; //   ***************************************************************THRESHOLD IR TO MAKE THE ROBOT MOVE FORWARD
 int distance; // Distance between ultrasonic sensor and box
 unsigned int uS; // Send ping, get ping time in microseconds (uS)
-
-unsigned long int forwardTime; //amount of time the robot spends moving forward
-unsigned long int totalTime;  //Amount of time since the robot was turned on/serial monitor reopened
-unsigned long int forwardTimeBegin; //store that time
-unsigned long int forwardTimeEnd; //the time at which the robot has picked up the container
-int ftick = 0;  //help remember the time at which the robot stops turning, and is pointed at the IR
 
 int retrieve = 0; //if retrieve = 0, run the code to find the container and move to it
 //if retrieve = 1, run code to go backwards
 int stopTurning = 1;
 int backwards = 0;
+int i = 0;
+int j = 0;
 
 void setup() {
+
   pinMode(leftForward, OUTPUT); // Assign motor pins
   pinMode(leftBackward, OUTPUT);
   pinMode(rightForward, OUTPUT);
@@ -82,7 +79,7 @@ void setup() {
 void loop() {
 
   while (retrieve == 0) {
-
+    // delay(1000);
     val1 = analogRead(sensor1); // Read sensor values
     val2 = analogRead(sensor2);
     val3 = analogRead(sensor3);
@@ -98,9 +95,9 @@ void loop() {
     maxLeft = max(val1, val2); // COMPARE SENSOR VALUES OF LEFT SIDE
     maxLeft = max(maxLeft, val3);
     maxLeft = max(maxLeft, val4);
-    maxLeft = max(maxLeft, val5);
+    //    maxLeft = max(maxLeft, val5);
 
-    maxRight = max(val7, val8); // COMPARE SENSOR VALUES OF RIGHT SIDE
+    maxRight = max(0, val8); // COMPARE SENSOR VALUES OF RIGHT SIDE (sensor 7 is deactivated)
     maxRight = max(maxRight, val9);
     maxRight = max(maxRight, val10);
     maxRight = max(maxRight, val11);
@@ -109,29 +106,29 @@ void loop() {
     distance = (uS / US_ROUNDTRIP_CM); // Convert ping time to distance in cm (0 = outside set distance range)
 
     // Print sensor values (for debugging only)
-    //  Serial.print("1: ");
-    //  Serial.println(val1);
-    //  Serial.print("2: ");
-    //  Serial.println(val2);
-    //  Serial.print("3: ");
-    //  Serial.println(val3);
-    //  Serial.print("4: ");
-    //  Serial.println(val4);
-    //  Serial.print("5: ");
-    //  Serial.println(val5);
-    //  Serial.print("6: ");
-    //  Serial.println(val6);
-    //  Serial.print("7: ");
-    //  Serial.println(val7);
-    //  Serial.print("8: ");
-    //  Serial.println(val8);
-    //  Serial.print("9: ");
-    //  Serial.println(val9);
-    //  Serial.print("10: ");
-    //  Serial.println(val10);
-    //  Serial.print("11: ");
-    //  Serial.println(val11);
-    //  Serial.println();
+    Serial.print("1: ");
+    Serial.println(val1);
+    Serial.print("2: ");
+    Serial.println(val2);
+    Serial.print("3: ");
+    Serial.println(val3);
+    Serial.print("4: ");
+    Serial.println(val4);
+    Serial.print("5: ");
+    Serial.println(val5);
+    Serial.print("6: ");
+    Serial.println(val6);
+    Serial.print("7: ");
+    Serial.println(val7);
+    Serial.print("8: ");
+    Serial.println(val8);
+    Serial.print("9: ");
+    Serial.println(val9);
+    Serial.print("10: ");
+    Serial.println(val10);
+    Serial.print("11: ");
+    Serial.println(val11);
+    Serial.println();
 
     // What if both are bigger than val6? We should code this in
 
@@ -141,37 +138,37 @@ void loop() {
     //  Serial.println(val6);
     //  Serial.print("Right: ");
     //  Serial.println(maxRight);
-    //  Serial.print("Distance (cm): ");
-    //  Serial.println(distance);
 
-    if (maxLeft > threshold && maxLeft > val6) {     // Turn left
-      digitalWrite(leftForward, LOW);
-      analogWrite(leftBackward, vTurning);
-      digitalWrite(rightForward, LOW);
-      analogWrite(rightBackward, vTurning);
-    }
-
-    else if (maxRight > threshold && maxRight > val6) {   // Turn right
+     if (maxRight > threshold && maxRight > val6) {   // Turn right
       analogWrite(leftForward, vTurning);
       digitalWrite(leftBackward, LOW);
       analogWrite(rightForward, vTurning);
       digitalWrite(rightBackward, LOW);
+      // delay(500);
+    }
+    
+    else if (maxLeft > threshold && maxLeft > val6) {     // Turn left
+      digitalWrite(leftForward, LOW);
+      analogWrite(leftBackward, vTurning);
+      digitalWrite(rightForward, LOW);
+      analogWrite(rightBackward, vTurning);
+      // delay(500);
     }
 
-    else if (val6 > threshold && val6 > maxLeft && val6 > maxRight) { // Go forward when middle sensor detects most IR
+    else if (val6 > threshold && val6 > maxLeft && val6 > maxRight) { // Go forward when middle sensor detects most IR  
 
-      if (ftick == 0) {    //remember the time ONLY ONCE and ONLY when robot is pointed at container
-        forwardTimeBegin = millis();
-        Serial.print("**********************************forwardTimeBegin = ");
-        Serial.println(forwardTimeBegin);
-        ftick = 1;
+
+      //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+      //If val6 > threshold but not greater than maxLeft or maxRight even if it has picked up the container, retrieve does not get toggled because code does not enter this else if statement
+
+      
+      if(distance >= 20){
+        velocity = vForward;
       }
-
-      if (distance < 20 && distance >= 7) {  // Throttle velocity based on ultrasonic distance reading (distances in cm)
+      else if (distance < 20 && distance >= 8) {  // Throttle velocity based on ultrasonic distance reading (distances in cm)
         velocity = 0.75 * vForward;
       }
-
-      else if (distance < 7 && distance > 1 && retrieve == 0) {   //ADJUST VALUE OF DISTANCE BASED ON LEGNTH OF MAGNET ARM
+      else if (distance < 8 && distance > 1 && retrieve == 0 && val6 > threshold) {   //ADJUST VALUE OF DISTANCE BASED ON LEGNTH OF MAGNET ARM
         velocity = 0;
         retrieve = 1;  //value to signify that the robot has reached the object and should now begin retrieval phase
         //distance = 20; // arbitrarily reset the distance so that it isn't 0/doesn't stop the code
@@ -182,61 +179,65 @@ void loop() {
       digitalWrite(leftBackward, LOW);
       digitalWrite(rightForward, LOW);
       analogWrite(rightBackward, velocity);
+      delay(100); //Have the robot move forward for a decent amount of time instead of being so jittery side to side
+
+      i = i + 1;
     }
-    
-    else {
-      // If no IR detected, stop moving
+    else { // If no IR detected, stop moving
       digitalWrite(leftForward, LOW);
       digitalWrite(leftBackward, LOW);
       digitalWrite(rightForward, LOW);
       digitalWrite(rightBackward, LOW);
     }
-    
+
     Serial.print("Distance (cm): ");
     Serial.println(distance);
     Serial.print("Retrieve? ");
     Serial.println(retrieve);
   }
 
-  //****************************START RETRIEVAL PROCESS**************************************
+  //********************************************************START RETRIEVAL PROCESS**************************************
   if (retrieve == 1 && stopTurning == 1) { //if on retrieval phase, turn around
-    forwardTimeEnd = millis();
-    Serial.print("*********************FORWARDTIMEEND = ");
-    Serial.println(forwardTimeEnd);
+
     Serial.print("***********************RETRIEVE = ");
     Serial.println(retrieve);
+    val1 = analogRead(sensor1); // Read sensor values
+    val2 = analogRead(sensor2);
+    val3 = analogRead(sensor3);
+    val4 = analogRead(sensor4);
+    val5 = analogRead(sensor5);
+    val6 = analogRead(sensor6);
+    val7 = analogRead(sensor7);
+    val8 = analogRead(sensor8);
+    val9 = analogRead(sensor9);
+    val10 = analogRead(sensor10);
+    val11 = analogRead(sensor11);
 
     digitalWrite(leftForward, LOW);
     analogWrite(leftBackward, vTurning);
     digitalWrite(rightForward, LOW);
     analogWrite(rightBackward, vTurning);
 
-    delay(1950); //change depending on velocity so that it turns exactly around
+    delay(2800); //change depending on velocity so that it turns exactly around
     stopTurning = 0;
 
     digitalWrite(leftForward, LOW);
     digitalWrite(leftBackward, LOW);
     digitalWrite(rightForward, LOW);
     digitalWrite(rightBackward, LOW);
-
-    forwardTime = forwardTimeEnd - forwardTimeBegin; //Time it took for robot to get to container after it first located it
-    Serial.print("************forwardTime = ");
-    Serial.println(forwardTime);
-    totalTime = millis();
   }
 
   //*********************************** BACKTRACKING ************************************
-
   if (backwards == 0) { //If statement not needed, was used to ensure loop ran only once during testing
-   
-    while ( (millis() - totalTime) < forwardTime) { //run until current time - time it stopped
+    i = 1.4*i;
+    while (j < i) {
       Serial.println("************WHILE LOOP TO GO BACKWAAAAAAAAAAAAAAAAAAAAAAAAAAAAARDS ");
       analogWrite(leftForward, vBackwards);
       digitalWrite(leftBackward, LOW);
       digitalWrite(rightForward, LOW);
       analogWrite(rightBackward, vBackwards);
+      j = j + 1;
     }
-    
     backwards = 1;
   }
   digitalWrite(leftForward, LOW);
