@@ -1,16 +1,15 @@
 #include <NewPing.h>
 #include <RotaryEncoder.h>
 
-// Modify pin numbers to work with our wiring
 #define TRIGGER_PIN  22  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     24  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
 int leftForward = 10; // These pins are not named intuitively
-int leftBackward = 11; // These pins are not named intuitively
-int rightForward = 2; // These pins are not named intuitively
-int rightBackward = 3; // These pins are not named intuitively
+int leftBackward = 11;
+int rightForward = 2;
+int rightBackward = 3;
 int sensor1 = A12;
 int sensor2 = A2;
 int sensor3 = A3;
@@ -38,7 +37,7 @@ int val11;
 int maxLeft;
 int maxRight;
 
-int vForward =  100;//velocity when moving forwards
+int vForward =  100; //velocity when moving forwards
 int vBackwards = 100;  //velocity when moving backwards
 int vTurning = 80;  //velocity when turning
 int velocity = vForward;  //velocity variable that gets changed sometimes
@@ -61,7 +60,7 @@ void setup() {
   pinMode(rightForward, OUTPUT);
   pinMode(rightBackward, OUTPUT);
 
-  pinMode(sensor1, INPUT);    // Assign sensor pins
+  pinMode(sensor1, INPUT); // Assign sensor pins
   pinMode(sensor2, INPUT);
   pinMode(sensor3, INPUT);
   pinMode(sensor4, INPUT);
@@ -95,7 +94,7 @@ void loop() {
     maxLeft = max(val1, val2); // COMPARE SENSOR VALUES OF LEFT SIDE
     maxLeft = max(maxLeft, val3);
     maxLeft = max(maxLeft, val4);
-    //    maxLeft = max(maxLeft, val5);
+    //    maxLeft = max(maxLeft, val5); // WENDY: are we using all 11 sensors? if yes, reactivate 5 (also see below)
 
     maxRight = max(0, val8); // COMPARE SENSOR VALUES OF RIGHT SIDE (sensor 7 is deactivated)
     maxRight = max(maxRight, val9);
@@ -168,7 +167,7 @@ void loop() {
       else if (distance < 20 && distance >= 8) {  // Throttle velocity based on ultrasonic distance reading (distances in cm)
         velocity = 0.75 * vForward;
       }
-      else if (distance < 8 && distance > 1 && retrieve == 0 && val6 > threshold) {   //ADJUST VALUE OF DISTANCE BASED ON LEGNTH OF MAGNET ARM
+      else if (distance < 8 && distance > 1 && retrieve == 0 && val6 > threshold) {
         velocity = 0;
         retrieve = 1;  //value to signify that the robot has reached the object and should now begin retrieval phase
         //distance = 20; // arbitrarily reset the distance so that it isn't 0/doesn't stop the code
@@ -213,7 +212,7 @@ void loop() {
     val10 = analogRead(sensor10);
     val11 = analogRead(sensor11);
 
-    digitalWrite(leftForward, LOW);
+    digitalWrite(leftForward, LOW); // WENDY: what direction does the robot go? Pls comment here
     analogWrite(leftBackward, vTurning);
     digitalWrite(rightForward, LOW);
     analogWrite(rightBackward, vTurning);
@@ -229,7 +228,7 @@ void loop() {
 
   //*********************************** BACKTRACKING ************************************
   if (backwards == 0) { //If statement not needed, was used to ensure loop ran only once during testing
-    i = 1.4*i;
+    i = 1.4*i; // WENDY: what does this mean? Why 1.4?
     while (j < i) {
       Serial.println("************WHILE LOOP TO GO BACKWAAAAAAAAAAAAAAAAAAAAAAAAAAAAARDS ");
       analogWrite(leftForward, vBackwards);
@@ -245,4 +244,3 @@ void loop() {
   digitalWrite(rightForward, LOW);
   digitalWrite(rightBackward, LOW);
 }
-
