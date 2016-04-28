@@ -58,7 +58,7 @@ long int forwardDelta;
 int threshold = 200; //   ***************************************************************THRESHOLD IR TO MAKE THE ROBOT MOVE FORWARD
 int superThreshold = 800; // For going forward
 int distance; // Distance between ultrasonic sensor and box
-unsigned int uS; // Send ping, get ping time in microseconds (uS)
+unsigned int uS; // Send ping, get ping time in milliseconds (uS)
 
 int retrieve = 0; //if retrieve = 0, run the code to find the container and move to it
 //if retrieve = 1, run code to go backwards
@@ -112,7 +112,7 @@ void loop() {
     maxRight = max(maxRight, val10);
     maxRight = max(maxRight, val11);
 
-    uS = sonar.ping(); // Send ping, get ping time in microseconds (uS)
+    uS = sonar.ping(); // Send ping, get ping time in milliseconds (uS)
     distance = (uS / US_ROUNDTRIP_CM); // Convert ping time to distance in cm (0 = outside set distance range)
 
     // Print sensor values (for debugging only)
@@ -206,12 +206,12 @@ void loop() {
       maxRight = max(maxRight, val11);
     }
     if (maxRight > threshold && maxRight > val6 && distance >= 8) {   // Turn right
-      rightTurnStart = micros();
+      rightTurnStart = millis();
       analogWrite(leftForward, vTurning);
       digitalWrite(leftBackward, LOW);
       analogWrite(rightForward, vTurning);
       digitalWrite(rightBackward, LOW);
-      rightTurnEnd = micros();
+      rightTurnEnd = millis();
       rightTurnDelta = rightTurnEnd - rightTurnStart;
       rightTurnTime = rightTurnTime + rightTurnDelta;
     }
@@ -232,7 +232,7 @@ void loop() {
       }
       else if (distance < 8 && distance > 1 && retrieve == 0 && val6 > threshold) {
         delay(100);
-        uS = sonar.ping(); // Send ping, get ping time in microseconds (uS)
+        uS = sonar.ping(); // Send ping, get ping time in milliseconds (uS)
         distance = (uS / US_ROUNDTRIP_CM); // Convert ping time to distance in cm (0 = outside set distance range)
 
         if (distance < 8 && distance > 1 && val6 > threshold) {
@@ -241,13 +241,13 @@ void loop() {
         }
       }
       // Drive straight towards box (velocity is determined by distance from box)
-      forwardStart = micros();
+      forwardStart = millis();
       analogWrite(leftForward, velocity);
       digitalWrite(leftBackward, LOW);
       digitalWrite(rightForward, LOW);
       analogWrite(rightBackward, velocity);
       delay(100); //Have the robot move forward for a decent amount of time instead of being so jittery side to side
-      forwardEnd = micros(); // wendy
+      forwardEnd = millis(); // wendy
       forwardDelta = forwardEnd - forwardStart;
       Serial.print("Forward Delta");
       Serial.println(forwardDelta);
