@@ -1,3 +1,5 @@
+// This code makes robot travel to start location, and can maneuver around objects, but not both together
+
 int printTime = 0;
 
 #include <NewPing.h>
@@ -40,18 +42,17 @@ int maxLeft;
 int maxRight;
 
 int vForward =  100; //velocity when moving forwards
-int vBackwards = 100;  //velocity when moving backwards
 int vTurning = 100;  //velocity when turning
 int velocity = vForward;  //velocity variable that gets changed sometimes
 
 int turnedAround = 0;
-long int leftLoopCount = 0;
-long int rightLoopCount = 0;
-long int forwardLoopCount = 0;
+int leftLoopCount = 0;
+int rightLoopCount = 0;
+int forwardLoopCount = 0;
 int netLeftLoop;
 
 
-int threshold = 200; //   ***************************************************************THRESHOLD IR TO MAKE THE ROBOT MOVE FORWARD
+int threshold = 400; //   ***************************************************************THRESHOLD IR TO MAKE THE ROBOT MOVE FORWARD
 int superThreshold = 800; // For going forward
 int distance; // Distance between ultrasonic sensor and box
 unsigned int uS; // Send ping, get ping time in milliseconds (uS)
@@ -60,6 +61,14 @@ int retrieve = 0; //if retrieve = 0, run the code to find the container and move
 //if retrieve = 1, run code to go backwards
 int stopTurning = 1;
 int backwards = 0;
+
+int rightAvoid = 1;
+int forwardAvoid1 = 1;
+int leftAvoid = 1;
+int forwardAvoid2 = 1;
+int obstacleFound = 0;
+
+int fullTurnTime = 2900;
 
 void setup() {
 
@@ -82,11 +91,10 @@ void setup() {
 
   Serial.begin(9600);       // Send outputs to screen for debugging
 }
+
 //45s for 10 turns
 void loop() {
-
   while (retrieve == 0) {
-    // delay(1000);
     val1 = analogRead(sensor1); // Read sensor values
     val2 = analogRead(sensor2);
     val3 = analogRead(sensor3);
@@ -98,6 +106,17 @@ void loop() {
     val9 = analogRead(sensor9);
     val10 = analogRead(sensor10);
     val11 = analogRead(sensor11);
+    //    val1 = map(val1, 130, 1000, 0, 1023);
+    //    val2 = map(val2, 3, 1000, 0, 1023);
+    //    val3 = map(val3, 41, 1000, 0, 1023);
+    //    val4 = map(val4, 87, 1000, 0, 1023);
+    //    val5 = map(val5, 3, 1000, 0, 1023);
+    //    val6 = map(val6, 132, 1000, 0, 1023);
+    //    val7 = map(val7, 3, 1000, 0, 1023);
+    //    val8 = map(val8, 41, 1000, 0, 1023);
+    //    val9 = map(val9, 87, 1000, 0, 1023);
+    //    val10 = map(val10, 3, 1000, 0, 1023);
+    //    val11 = map(val11, 3, 1000, 0, 1023);
 
     maxLeft = max(val1, val2); // COMPARE SENSOR VALUES OF LEFT SIDE
     maxLeft = max(maxLeft, val3);
@@ -112,49 +131,110 @@ void loop() {
     distance = (uS / US_ROUNDTRIP_CM); // Convert ping time to distance in cm (0 = outside set distance range)
 
     // Print sensor values (for debugging only)
-    Serial.print("1: ");
-    Serial.println(val1);
-    Serial.print("2: ");
-    Serial.println(val2);
-    Serial.print("3: ");
-    Serial.println(val3);
-    Serial.print("4: ");
-    Serial.println(val4);
-    Serial.print("5: ");
-    Serial.println(val5);
-    Serial.print("6: ");
-    Serial.println(val6);
-    Serial.print("7: ");
-    Serial.println(val7);
-    Serial.print("8: ");
-    Serial.println(val8);
-    Serial.print("9: ");
-    Serial.println(val9);
-    Serial.print("10: ");
-    Serial.println(val10);
-    Serial.print("11: ");
-    Serial.println(val11);
-    Serial.println();
+    //    Serial.print("1: ");
+    //    Serial.println(val1);
+    //    Serial.print("2: ");
+    //    Serial.println(val2);
+    //    Serial.print("3: ");
+    //    Serial.println(val3);
+    //    Serial.print("4: ");
+    //    Serial.println(val4);
+    //    Serial.print("5: ");
+    //    Serial.println(val5);
+    //    Serial.print("6: ");
+    //    Serial.println(val6);
+    //    Serial.print("7: ");
+    //    Serial.println(val7);
+    //    Serial.print("8: ");
+    //    Serial.println(val8);
+    //    Serial.print("9: ");
+    //    Serial.println(val9);
+    //    Serial.print("10: ");
+    //    Serial.println(val10);
+    //    Serial.print("11: ");
+    //    Serial.println(val11);
 
     // What if both are bigger than val6? We should code this in
 
-      //  Serial.print("Left: ");  // Print sensor readings
+    //  Serial.print("Left: ");  // Print sensor readings
     //  Serial.println(maxLeft);
     //  Serial.print("Middle: ");
     //  Serial.println(val6);
     //  Serial.print("Right: ");
     //  Serial.println(maxRight);
 
-    while (retrieve == 0 && maxRight < threshold && maxLeft < threshold && val5 < threshold && val6 < threshold && val7 < threshold) {
+//    if (retrieve == 0 && distance < 15 && distance > 8 && maxRight > threshold && maxLeft > threshold && val5 > threshold && val6 > threshold && val7 > threshold) {
+//      Serial.print("Distance: ");
+//      Serial.println(distance);
+//      Serial.println("Maneuvering around obstacle");
+//      obstacleFound = 1;
+//      analogWrite(leftForward, LOW);
+//      digitalWrite(leftBackward, LOW);
+//      analogWrite(rightForward, LOW);
+//      digitalWrite(rightBackward, LOW);
+//      delay(500); //stop for 0.5s so robot does not run into object
+//
+//      if (rightAvoid == 1) { // Turn 90 degrees right, calculate # loops for 45 degrees
+//        int rightTurnStart = millis();
+//        //        int rightTurnCurrent = millis();
+//        while (millis() - rightTurnStart < (fullTurnTime / 4)) {
+//          //          int rightS = millis();
+//          analogWrite(leftForward, vTurning);
+//          digitalWrite(leftBackward, LOW);
+//          analogWrite(rightForward, vTurning);
+//          digitalWrite(rightBackward, LOW);
+//          //          rightLoopCount = rightLoopCount + 0.5;
+//          //          int rightE = millis();
+//          //          int dt = rightE - rightS;
+//          //          if (printTime == 0){
+//          //            Serial.print("Right Avoid Turn Time: ");
+//          //            Serial.println(dt);
+//          //            printTime = 1;
+//          //          }
+//          //          rightTurnCurrent = millis();
+//        }
+//        rightAvoid = 0;
+//      }
+//
+//      if (forwardAvoid1 == 1) { // Go forward for 1.5 seconds, calculate # loops * sqrt(2)
+//        int forwardStart = millis();
+//        //        int forwardAvoidLoop = 0;
+//        while (millis() - forwardStart < fullTurnTime / 3) {
+//          analogWrite(leftForward, velocity);
+//          digitalWrite(leftBackward, LOW);
+//          digitalWrite(rightForward, LOW);
+//          analogWrite(rightBackward, velocity);
+//          //          forwardAvoidLoop = forwardAvoidLoop + 1;
+//        }
+//        //        forwardAvoidLoop = forwardAvoidLoop * sqrt(2);
+//        //        forwardLoopCount = forwardLoopCount + forwardAvoidLoop;
+//        forwardAvoid1 = 0;
+//      }
+//
+//      if (leftAvoid == 1) { // Turn 90 degrees left
+//        digitalWrite(leftForward, LOW);
+//        analogWrite(leftBackward, vTurning);
+//        digitalWrite(rightForward, LOW);
+//        analogWrite(rightBackward, vTurning);
+//        delay(fullTurnTime / 4); // 90 degrees
+//        leftAvoid = 0;
+//      }
+//
+//      if (forwardAvoid2 == 1) { // Go forward again (2nd leg of avoid maneuver)
+//        analogWrite(leftForward, velocity);
+//        digitalWrite(leftBackward, LOW);
+//        digitalWrite(rightForward, LOW);
+//        analogWrite(rightBackward, velocity);
+//        delay(fullTurnTime / 3); // proportional forward distance
+//        forwardAvoid2 = 0;
+//      }
+//    }
+
+    // while (retrieve == 0 && val4 < threshold && val5 < threshold && val6 < threshold && val7 < threshold && val8 < threshold) {
+    while (retrieve == 0 && maxLeft < threshold && val6 < threshold && maxRight < threshold) {
       // This while loop tells the robot to turn right until it picks up IR signal.
       // Since this loop runs continuously outside of the parent while loop,
       // analogRead(sensor) has to be reimplemented inside the loop.
-      //delay(2000);
-      analogWrite(leftForward, vTurning);
-      digitalWrite(leftBackward, LOW);
-      analogWrite(rightForward, vTurning);
-      digitalWrite(rightBackward, LOW);
-
       val1 = analogRead(sensor1); // Read sensor values
       val2 = analogRead(sensor2);
       val3 = analogRead(sensor3);
@@ -166,56 +246,59 @@ void loop() {
       val9 = analogRead(sensor9);
       val10 = analogRead(sensor10);
       val11 = analogRead(sensor11);
+      //      val1 = map(val1, 130, 1000, 0, 1023);
+      //      val2 = map(val2, 3, 1000, 0, 1023);
+      //      val3 = map(val3, 41, 1000, 0, 1023);
+      //      val4 = map(val4, 87, 1000, 0, 1023);
+      //      val5 = map(val5, 3, 1000, 0, 1023);
+      //      val6 = map(val6, 132, 1000, 0, 1023);
+      //      val7 = map(val7, 3, 1000, 0, 1023);
+      //      val8 = map(val8, 41, 1000, 0, 1023);
+      //      val9 = map(val9, 87, 1000, 0, 1023);
+      //      val10 = map(val10, 3, 1000, 0, 1023);
+      //      val11 = map(val11, 3, 1000, 0, 1023);
 
-      //      Serial.print("1: ");
-      //      Serial.println(val1);
-      //      Serial.print("2: ");
-      //      Serial.println(val2);
-      //      Serial.print("3: ");
-      //      Serial.println(val3);
-      //      Serial.print("4: ");
-      //      Serial.println(val4);
-      //      Serial.print("5: ");
-      //      Serial.println(val5);
-      //      Serial.print("6: ");
-      //      Serial.println(val6);
-      //      Serial.print("7: ");
-      //      Serial.println(val7);
-      //      Serial.print("8: ");
-      //      Serial.println(val8);
-      //      Serial.print("9: ");
-      //      Serial.println(val9);
-      //      Serial.print("10: ");
-      //      Serial.println(val10);
-      //      Serial.print("11: ");
-      //      Serial.println(val11);
-      //      Serial.println();
+      Serial.println("********Sweeping right*********");
+      Serial.println();
+      Serial.print("1: ");
+      Serial.println(val1);
+      Serial.print("2: ");
+      Serial.println(val2);
+      Serial.print("3: ");
+      Serial.println(val3);
+      Serial.print("4: ");
+      Serial.println(val4);
+      Serial.print("5: ");
+      Serial.println(val5);
+      Serial.print("6: ");
+      Serial.println(val6);
+      Serial.print("7: ");
+      Serial.println(val7);
+      Serial.print("8: ");
+      Serial.println(val8);
+      Serial.print("9: ");
+      Serial.println(val9);
+      Serial.print("10: ");
+      Serial.println(val10);
+      Serial.print("11: ");
+      Serial.println(val11);
+      Serial.println();
 
-      maxLeft = max(val1, val2); // COMPARE SENSOR VALUES OF LEFT SIDE
-      maxLeft = max(maxLeft, val3);
-      maxLeft = max(maxLeft, val4);
-      //    maxLeft = max(maxLeft, val5);
-
-      maxRight = max(0, val8); // COMPARE SENSOR VALUES OF RIGHT SIDE (sensor 7 is deactivated)
-      maxRight = max(maxRight, val9);
-      maxRight = max(maxRight, val10);
-      maxRight = max(maxRight, val11);
-    }
-    if (maxRight > threshold && maxRight > val6 && distance >= 8) {   // Turn right
       analogWrite(leftForward, vTurning);
       digitalWrite(leftBackward, LOW);
       analogWrite(rightForward, vTurning);
       digitalWrite(rightBackward, LOW);
-      rightLoopCount = rightLoopCount + 1;
+      //      digitalWrite(leftForward, LOW);
+      //      analogWrite(leftBackward, vTurning);
+      //      digitalWrite(rightForward, LOW);
+      //      analogWrite(rightBackward, vTurning);
+      //      delay(100);
     }
-    else if (maxLeft > threshold && maxLeft > val6 && distance >= 8) {     // Turn left
-      digitalWrite(leftForward, LOW);
-      analogWrite(leftBackward, vTurning);
-      digitalWrite(rightForward, LOW);
-      analogWrite(rightBackward, vTurning);
-      leftLoopCount = leftLoopCount + 1;
-    }
-    else if (val6 > threshold && val6 > maxLeft && val6 > maxRight || (((val5 > superThreshold) &&  (val6 > superThreshold) ) || ((val6 > superThreshold) && (val7 > superThreshold)))) { // Go forward
+
+
+    if (val6 > threshold && val6 > maxLeft && val6 > maxRight) { // Go forward when middle sensor detects most IR
+      //    else if (val6 > threshold && val6 > maxLeft && val6 > maxRight || (((val5 > superThreshold) &&  (val6 > superThreshold) ) || ((val6 > superThreshold) && (val7 > superThreshold)))) { // Go forward
+
       if (distance >= 8) {  // Throttle velocity based on ultrasonic distance reading (distances in cm)
         velocity = vForward; // this makes our new backtracking mechanism easier to implement
       }
@@ -227,22 +310,86 @@ void loop() {
         if (distance < 8 && distance > 1 && val6 > threshold) {
           velocity = 0;
           retrieve = 1;  //value to signify that the robot has reached the object and should now begin retrieval phase
+          Serial.println("RETRIEVE STATEMENT #1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
       }
       // Drive straight towards box (velocity is determined by distance from box)
-
       analogWrite(leftForward, velocity);
       digitalWrite(leftBackward, LOW);
       digitalWrite(rightForward, LOW);
       analogWrite(rightBackward, velocity);
       delay(100); // Have the robot move forward for a decent amount of time instead of being so jittery side to side
       forwardLoopCount = forwardLoopCount + 1;
+      Serial.println("****************Driving straight************");
+    }
+    else if (maxRight > threshold && maxRight > val6 && distance >= 8) {   // Turn right
+      //      int rightS = millis();
+      analogWrite(leftForward, vTurning);
+      digitalWrite(leftBackward, LOW);
+      analogWrite(rightForward, vTurning);
+      digitalWrite(rightBackward, LOW);
+      rightLoopCount = rightLoopCount + 1;
+      //      int rightE = millis();
+      //      int dt = rightE - rightS;
+      //      if (printTime == 1){
+      //        Serial.print("Right Turn Loop Time: ");
+      //        Serial.println(dt);
+      //        printTime = 2;
+      //      }
+      Serial.println("*******Turning right**********");
+      Serial.print("maxRight: ");
+      Serial.println(maxRight);
+      Serial.print("8: ");
+      Serial.println(val8);
+      Serial.print("9: ");
+      Serial.println(val9);
+      Serial.print("10: ");
+      Serial.println(val10);
+      Serial.print("11: ");
+      Serial.println(val11);
+      Serial.println();
+
+    }
+    else if (maxLeft > threshold && maxLeft > val6 && distance >= 8) {     // Turn left
+      digitalWrite(leftForward, LOW);
+      analogWrite(leftBackward, vTurning);
+      digitalWrite(rightForward, LOW);
+      analogWrite(rightBackward, vTurning);
+      leftLoopCount = leftLoopCount + 1;
+      Serial.println("*************Turning left***********");
+      Serial.print("maxLeft: ");
+      Serial.println(maxLeft);
+      Serial.print("1: ");
+      Serial.println(val1);
+      Serial.print("2: ");
+      Serial.println(val2);
+      Serial.print("3: ");
+      Serial.println(val3);
+      Serial.print("4: ");
+      Serial.println(val4);
+      Serial.println();
     }
 
+    else if (val5 > superThreshold && val6 > superThreshold && val7 > superThreshold && distance < 8 && distance > 1) {
+      delay(100);
+      uS = sonar.ping(); // Send ping, get ping time in milliseconds (uS)
+      distance = (uS / US_ROUNDTRIP_CM); // Convert ping time to distance in cm (0 = outside set distance range)
+
+      if (distance < 8 && distance > 1 && val6 > threshold) {
+        velocity = 0;
+        retrieve = 1;  //value to signify that the robot has reached the object and should now begin retrieval phase
+
+        Serial.println("RETRIEVE STATEMENT #2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+      }
+    }
     Serial.print("Distance (cm): ");
     Serial.println(distance);
-    Serial.print("Retrieve? ");
-    Serial.println(retrieve);
+    //    Serial.print("Retrieve? ");
+    //    Serial.println(retrieve);
+
+    //    leftLoopCount = ceil(leftLoopCount); // round to nearest larger integer
+    //    rightLoopCount = ceil(rightLoopCount);
+    //    forwardLoopCount = ceil(forwardLoopCount);
   }
 
   //********************************************************START RETRIEVAL PROCESS**************************************
@@ -256,12 +403,12 @@ void loop() {
     Serial.print("Forward Loop Count: ");
     Serial.println(forwardLoopCount);
 
-    if (turnedAround == 0){
+    if (turnedAround == 0) {
       digitalWrite(leftForward, LOW);
       analogWrite(leftBackward, vTurning);
       digitalWrite(rightForward, LOW);
       analogWrite(rightBackward, vTurning);
-      delay(2250);
+      delay(fullTurnTime / 2); // 180 degrees
       turnedAround = 1;
       digitalWrite(leftForward, LOW);
       digitalWrite(leftBackward, LOW);
@@ -269,15 +416,23 @@ void loop() {
       digitalWrite(rightBackward, LOW);
       netLeftLoop = leftLoopCount - rightLoopCount;
     }
+
+    if (obstacleFound == 1) {
+      digitalWrite(leftForward, LOW); // Turn left
+      analogWrite(leftBackward, vTurning);
+      digitalWrite(rightForward, LOW);
+      analogWrite(rightBackward, vTurning);
+      delay(fullTurnTime / 8); // 45 degrees
+    }
     Serial.print("Net Left Loop: ");
     Serial.println(netLeftLoop);
 
-    if (netLeftLoop > 0){
-      while (netLeftLoop > 0){ // Turn left
-        digitalWrite(leftForward, LOW);
-        analogWrite(leftBackward, vTurning);
-        digitalWrite(rightForward, LOW);
-        analogWrite(rightBackward, vTurning); 
+    if (netLeftLoop > 0) {
+      while (netLeftLoop > 0) { // Turn right
+        analogWrite(leftForward, vTurning);
+        digitalWrite(leftBackward, LOW);
+        analogWrite(rightForward, vTurning);
+        digitalWrite(rightBackward, LOW);
         netLeftLoop = netLeftLoop - 1;
         Serial.print("Net Left Loop: ");
         Serial.println(netLeftLoop);
@@ -287,16 +442,16 @@ void loop() {
       digitalWrite(rightForward, LOW);
       digitalWrite(rightBackward, LOW);
     }
-    else if (netLeftLoop < 0){
-      while (abs(netLeftLoop) > 0){ // Turn right
-        analogWrite(leftForward, vTurning);
-        digitalWrite(leftBackward, LOW);
-        analogWrite(rightForward, vTurning);
-        digitalWrite(rightBackward, LOW);
+    else if (netLeftLoop < 0) {
+      while (abs(netLeftLoop) > 0) { // Turn left
+        digitalWrite(leftForward, LOW);
+        analogWrite(leftBackward, vTurning);
+        digitalWrite(rightForward, LOW);
+        analogWrite(rightBackward, vTurning);
         netLeftLoop = netLeftLoop + 1;
         Serial.print("Net Left Loop: ");
         Serial.println(netLeftLoop);
-      } 
+      }
       digitalWrite(leftForward, LOW);
       digitalWrite(leftBackward, LOW);
       digitalWrite(rightForward, LOW);
@@ -304,7 +459,14 @@ void loop() {
     }
     else { // netLeftLoop == 0
       velocity = vForward;
-      while (forwardLoopCount > 0){ // Go forward toward starting location
+      if (obstacleFound == 1) {
+        analogWrite(leftForward, velocity);
+        digitalWrite(leftBackward, LOW);
+        digitalWrite(rightForward, LOW);
+        analogWrite(rightBackward, velocity);
+        delay(ceil((fullTurnTime / 3)*sqrt(2))); // hypotenuse of proportional distance
+      }
+      while (forwardLoopCount > 0) { // Go forward toward starting location
         analogWrite(leftForward, velocity);
         digitalWrite(leftBackward, LOW);
         digitalWrite(rightForward, LOW);
@@ -320,21 +482,3 @@ void loop() {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
